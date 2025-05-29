@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../db');
 const sendEmail = require('../sendEmail');
 
+// This should match POST /api/attendance/mark
 router.post('/mark', async (req, res) => {
   const { rfid_number, subject_id } = req.body;
   if (!rfid_number || !subject_id) {

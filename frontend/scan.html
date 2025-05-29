@@ -59,6 +59,17 @@
       localStorage.removeItem('admin_logged_in');
       window.location.href = '/index.html';
     }
+
+    // Add this function before any code that calls showMessage
+    function showMessage(id, message, alertClass) {
+      const el = document.getElementById(id);
+      el.textContent = message;
+      el.className = `alert ${alertClass} text-center`;
+      el.style.display = 'block';
+      setTimeout(() => {
+        el.style.display = 'none';
+      }, 3000);
+    }
   </script>
   <!-- Place logout button at the top right, fixed for visibility -->
   <div style="position:fixed; top:20px; right:30px; z-index:1000;">
@@ -86,7 +97,7 @@
         <button type="submit" class="btn btn-success">Submit</button>
       </div>
     </form>
-    <div id="attendanceMessage" class="alert alert-info py-2 px-3 mb-2" style="display:none;"></div>
+    <div id="attendanceMessage" class="alert text-center" style="display:none;"></div>
     <div class="text-muted small mb-2">Tap your ID to time in. Tap again to time out.</div>
     <div id="status-message" class="alert alert-success text-center" style="display:none;"></div>
 
@@ -162,9 +173,8 @@
         result = { message: 'Server error. Please try again.', status: 'error' };
       }
 
-      
+      const msg = document.getElementById('status-message');
       if (result.status === 'success') {
-        const msg = document.getElementById('status-message');
         // Highlight fullName and IN/OUT
         const actionWord = result.type === 'IN'
           ? '<span style="color:#198754;font-weight:bold;font-size:1.2em;">IN</span>'
@@ -173,6 +183,15 @@
           <span style="font-weight:bold;font-size:1.2em;color:#0d6efd;">${result.name}</span>
           <span> - Time ${actionWord} recorded at <b>${result.time}</b>.<br>Email will be sent in 1 minute.</span>
         `;
+        msg.className = 'alert alert-success text-center';
+        msg.style.display = 'block';
+        setTimeout(() => {
+          msg.style.display = 'none';
+        }, 3000);
+      } else {
+        // Show error message (e.g., RFID not found)
+        msg.textContent = result.message || 'RFID not found!';
+        msg.className = 'alert alert-danger text-center';
         msg.style.display = 'block';
         setTimeout(() => {
           msg.style.display = 'none';
