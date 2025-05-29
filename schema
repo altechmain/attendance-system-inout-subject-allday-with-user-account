@@ -5,6 +5,9 @@ DROP TABLE IF EXISTS students;
 DROP TABLE IF EXISTS attendance;
 DROP TABLE IF EXISTS pending_emails;
 DROP TABLE IF EXISTS subjects;
+DROP TABLE IF EXISTS accounts;
+DROP TABLE IF EXISTS teachers;
+DROP TABLE IF EXISTS admins;
 
 CREATE TABLE students (
   id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -43,4 +46,30 @@ CREATE TABLE pending_emails (
   send_at DATETIME NOT NULL,
   sent TINYINT(1) DEFAULT 0,
   active_subject VARCHAR(255)
+);
+
+CREATE TABLE accounts (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(50) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  role ENUM('admin', 'teacher') NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE teachers (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  firstname VARCHAR(50) NOT NULL,
+  lastname VARCHAR(50) NOT NULL,
+  email VARCHAR(100) UNIQUE,
+  account_id INT,
+  FOREIGN KEY (account_id) REFERENCES accounts(id)
+);
+
+CREATE TABLE admins (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  firstname VARCHAR(50) NOT NULL,
+  lastname VARCHAR(50) NOT NULL,
+  email VARCHAR(100) UNIQUE,
+  account_id INT,
+  FOREIGN KEY (account_id) REFERENCES accounts(id)
 );
