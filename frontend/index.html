@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Attendance System</title>
+  <!-- Bootstrap 5 CSS CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .attendance-container {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 2px 24px rgba(0,0,0,0.08);
+      padding: 2.5rem 2rem;
+      max-width: 400px;
+      width: 100%;
+    }
+    .form-label {
+      font-weight: 500;
+    }
+    #status-message {
+      transition: opacity 0.3s;
+    }
+    .table-container {
+      max-width: 800px;
+      width: 100%;
+      margin: 1.5rem 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #d1d9e6;
+      padding: 0.5em;
+      text-align: left;
+    }
+    th {
+      background: #f4f6fb;
+    }
+    .text-center {
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="attendance-container">
+    <h2 class="mb-4 text-center">Attendance System</h2>
+
+    <form id="setSubjectForm" class="mb-3">
+      <label for="activeSubjectSelect" class="form-label">Set Active Subject</label>
+      <div class="input-group mb-2">
+        <select id="activeSubjectSelect" class="form-select" required>
+          <option value="">-- Select Subject --</option>
+        </select>
+        <button type="submit" class="btn btn-primary">Set</button>
+      </div>
+      <div id="activeSubjectDisplay" class="form-text mb-2"></div>
+    </form>
+
+    <form id="attendanceForm" class="mb-3">
+      <label for="rfid_number" class="form-label">Time In / Time Out</label>
+      <div class="input-group mb-2">
+        <input type="text" id="rfid_number" name="rfid_number" class="form-control" placeholder="RFID Number" required autofocus />
+        <button type="submit" class="btn btn-success">Submit</button>
+      </div>
+    </form>
+    <div id="attendanceMessage" class="alert alert-info py-2 px-3 mb-2" style="display:none;"></div>
+    <div class="text-muted small mb-2">Tap your ID to time in. Tap again to time out.</div>
+    <div id="status-message" class="alert alert-success text-center" style="display:none;"></div>
+
+    <div class="table-container" style="display:none;">
+      <h4 class="text-center" id="tableTitle"></h4>
+      <div id="attendanceTableContainer"></div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS (optional, for dropdowns etc.) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    let activeSubjectId = null;
+    let activeSubjectText = '';
+
+    // Populate the subject combo box
+    async function loadSubjects() {
+      const res = await fetch('http://localhost:3000/api/subjects');
+      const subjects = await res.json();
+      const select = document.getElementById('activeSubjectSelect');
+      select.innerHTML = '<option value="">-- Select Subject --</option>';
+      subjects.forEach(subj => {
+        const opt = document.createElement('option');
+        opt.value = subj.id;
+        opt.textContent = `${subj.subject_code} - ${subj.subject_description}`;
+        select.appendChild(opt);
+      });
+    }
+    loadSubjects();
+
+    // Set active subject from combo box
+    document.getElementById('setSubjectForm').onsubmit = function(e) {
+      e.preventDefault();
+      const select = document.getElementById('activeSubjectSelect');
+      if (!select.value) {
+        document.getElementById('activeSubjectDisplay').textContent = 'Please select a subject!';
+        activeSubjectId = null;
+        activeSubjectText = '';
+        return;
+      }
+      activeSubjectId = select.value;
+      activeSubjectText = select.options[select.selectedIndex].textContent;
+      document.getElementById('activeSubjectDisplay').textContent = `Active Subject: ${activeSubjectText}`;
+      e.target.reset();
+    };
+
+    document.getElementById('attendanceForm').onsubmit = async (e) => {
+      e.preventDefault();
+      if (!activeSubjectId) {
+        showMessage('attendanceMessage', 'Please set the active subject first!', 'alert-danger');
+        return;
+      }
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
+      data.subject_id = activeSubjectId;
+
+      let result = { message: 'Unknown error', status: 'error' };
+      try {
+        const res = await fetch('http://localhost:3000/api/attendance/mark', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(data)
+        });
+
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          result = await res.json();
+        } else {
+          const text = await res.text();
+          result = { message: text, status: res.ok ? 'success' : 'error' };
+        }
+      } catch (error) {
+        result = { message: 'Server error. Please try again.', status: 'error' };
+      }
+
+      
+      if (result.status === 'success') {
+        const msg = document.getElementById('status-message');
+        // Highlight fullName and IN/OUT
+        const actionWord = result.type === 'IN'
+          ? '<span style="color:#198754;font-weight:bold;font-size:1.2em;">IN</span>'
+          : '<span style="color:#dc3545;font-weight:bold;font-size:1.2em;">OUT</span>';
+        msg.innerHTML = `
+          <span style="font-weight:bold;font-size:1.2em;color:#0d6efd;">${result.name}</span>
+          <span> - Time ${actionWord} recorded at <b>${result.time}</b>.<br>Email will be sent in 1 minute.</span>
+        `;
+        msg.style.display = 'block';
+        setTimeout(() => {
+          msg.style.display = 'none';
+        }, 3000);
+      }
+
+      e.target.reset();
+    };
+
+    // Fetch and display attendance records
+    async function fetchAttendanceRecords(subjectId) {
+      const res = await fetch(`http://localhost:3000/api/attendance/records?subject_id=${subjectId}`);
+      const data = await res.json();
+      return data;
+    }
+
+    // Generate and display attendance table
+    async function displayAttendanceTable(subjectId) {
+      const data = await fetchAttendanceRecords(subjectId);
+      const container = document.getElementById('attendanceTableContainer');
+      container.innerHTML = '';
+
+      if (!data.length) {
+        container.innerHTML = `<div class="text-center py-3">No attendance records found for this subject.</div>`;
+        return;
+      }
+
+      let html = `<table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="background:#f4f6fb;">
+            <th style="border:1px solid #d1d9e6;padding:0.5em;">No.</th>
+            <th style="border:1px solid #d1d9e6;padding:0.5em;">Student Name</th>
+            <th style="border:1px solid #d1d9e6;padding:0.5em;">RFID Number</th>
+            <th style="border:1px solid #d1d9e6;padding:0.5em;">Time In</th>
+            <th style="border:1px solid #d1d9e6;padding:0.5em;">Time Out</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.length ? data.map((row, idx) => `
+            <tr>
+              <td style="border:1px solid #d1d9e6;padding:0.5em;text-align:center;">${idx + 1}</td>
+              <td style="border:1px solid #d9e6;padding:0.5em;">${row.lastname}, ${row.firstname} ${row.middle_initial ? row.middle_initial + '.' : ''}</td>
+              <td style="border:1px solid #d9e6;padding:0.5em;">${row.rfid_number}</td>
+              <td style="border:1px solid #d9e6;padding:0.5em;">${row.time_in ? new Date(row.time_in).toLocaleString() : '-'}</td>
+              <td style="border:1px solid #d9e6;padding:0.5em;">${row.time_out ? new Date(row.time_out).toLocaleString() : '-'}</td>
+            </tr>
+          `).join('') : `<tr><td colspan="5" style="text-align:center;padding:1em;">No records found.</td></tr>`}
+        </tbody>
+      </table>`;
+
+      container.innerHTML = html;
+    }
+
+    // Example: Display table for the initially selected subject
+    // displayAttendanceTable(activeSubjectId);
+  </script>
+</body>
+</html>

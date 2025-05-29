@@ -1,0 +1,28 @@
+GitHub Copilot
+To serve your frontend (like upload.html) without using "Go Live" in VS Code, you can use a simple static file server. Here are the most common and easy ways:
+
+1. 
+server.js
+
+// ...existing code...
+const path = require('path');
+
+// Serve static frontend files
+app.use(express.static(path.join(__dirname, '../frontend')));
+
+// ...existing code...
+
+Restart your backend server.
+Now you can access your frontend at:
+http://localhost:3000/upload.html
+
+2. 
+Use Python's built-in HTTP server
+If you have Python installed, run this in your project root (where frontend is):
+
+cd frontend
+python -m http.server 5500
+
+Then open:
+http://localhost:5500
+
