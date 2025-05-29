@@ -17,6 +17,20 @@
   </style>
 </head>
 <body>
+  <script>
+    // Session check
+    if (localStorage.getItem('admin_logged_in') !== 'true') {
+      window.location.href = '/index.html';
+    }
+    function logout() {
+      localStorage.removeItem('admin_logged_in');
+      window.location.href = '/index.html';
+    }
+  </script>
+  <!-- Place logout button at the top right, fixed for visibility, with Bootstrap style -->
+  <div style="position:fixed; top:20px; right:30px; z-index:1000;">
+    <button class="btn btn-outline-danger btn-sm" onclick="logout()">Logout</button>
+  </div>
   <div class="add-admin-container">
     <h2 class="mb-4 text-center">Add New Admin</h2>
     <form id="addAdminForm">

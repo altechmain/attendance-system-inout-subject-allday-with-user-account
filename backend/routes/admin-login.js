@@ -14,31 +14,33 @@ const dbConfig = {
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
-  // 1. Hard-coded admin login (still works)
-  if (username === 'admin' && password === 'admin@2025') {
+  // 1. Allow hardcoded admin login
+  if (username === 'superadmin' && password === 'superadmin') {
     return res.json({ success: true, hardcoded: true });
   }
 
   // 2. Check in accounts and admins table
   try {
     const conn = await mysql.createConnection(dbConfig);
-    // Find account with role 'admin'
-    const [accounts] = await conn.execute(
-      `SELECT a.*, ad.id as admin_id
-       FROM accounts a
-       JOIN admins ad ON ad.account_id = a.id
-       WHERE a.username = ? AND a.role = 'admin'
-       LIMIT 1`,
+    // Find account with role 'admin' and matching username, joined with admins table
+    const [rows] = await conn.execute(
+      `SELECT a.password_hash
+         FROM accounts a
+         JOIN admins ad ON ad.account_id = a.id
+        WHERE a.username = ? AND a.role = 'admin'
+        LIMIT 1`,
       [username]
     );
     await conn.end();
 
-    if (accounts.length === 0) {
+    if (rows.length === 0) {
       return res.json({ success: false, message: 'Invalid credentials.' });
     }
 
-    const admin = accounts[0];
+    const admin = rows[0];
+    console.log('Comparing:', password, admin.password_hash);
     const match = await bcrypt.compare(password, admin.password_hash);
+    console.log('Match result:', match);
     if (match) {
       return res.json({ success: true });
     } else {

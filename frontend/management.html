@@ -143,12 +143,25 @@
   </style>
 </head>
 <body>
+  <script>
+    // Session check
+    if (localStorage.getItem('admin_logged_in') !== 'true') {
+      window.location.href = '/index.html';
+    }
+    function logout() {
+      localStorage.removeItem('admin_logged_in');
+      window.location.href = '/index.html';
+    }
+  </script>
+
   <div class="container">
     <div class="tabs">
       <button class="tab active" id="tab-subject">Register Subject</button>
       <button class="tab" id="tab-student">Student Management</button>
       <button class="tab" id="tab-upload">Upload CSV</button>
-      <button class="tab" id="tab-report">Report</button> <!-- NEW TAB -->
+      <button class="tab" id="tab-report">Report</button>
+      <!-- Logout tab styled as a button -->
+      <button class="tab btn btn-outline-danger btn-sm" style="margin-left:10px;" onclick="logout()">Logout</button>
     </div>
 
     <!-- Subject Registration -->
@@ -331,6 +344,12 @@
  
   </div>
 
+  <script>
+    // Redirect to login if not logged in
+    if (localStorage.getItem('admin_logged_in') !== 'true') {
+      window.location.href = '/index.html';
+    }
+  </script>
   <script>
     // Add these variables at the top of your script
     let allStudents = [];
