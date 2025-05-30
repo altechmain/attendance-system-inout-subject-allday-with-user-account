@@ -890,5 +890,17 @@ window.showEditStudentModal = showEditStudentModal;
     window.filterStudentTable = filterStudentTable;
   </script>
 
+  <script>
+    // In management.html or your JS file
+const role = localStorage.getItem('role');
+const teacher_id = localStorage.getItem('teacher_id');
+
+fetch(`/api/subjects?role=${role}&teacher_id=${teacher_id}`)
+  .then(res => res.json())
+  .then(subjects => {
+    // Render only the teacher's subjects
+  });
+  </script>
+
 </body>
 </html>

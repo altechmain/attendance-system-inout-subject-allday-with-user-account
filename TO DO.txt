@@ -1,2 +1,2 @@
-add user account
-
+fix no association in the subject and students for teacher_id in the table students and subjects, 
+the value is null

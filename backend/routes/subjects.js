@@ -25,19 +25,16 @@ router.post('/register', (req, res) => {
 });
 
 // Get all subjects
-router.get('/', (req, res) => {
-  const { code } = req.query;
-  if (code) {
-    db.query('SELECT * FROM subjects WHERE subject_code = ?', [code], (err, results) => {
-      if (err) return res.status(500).send('Database error.');
-      res.json(results);
-    });
-  } else {
-    db.query('SELECT * FROM subjects', (err, results) => {
-      if (err) return res.status(500).send('Database error.');
-      res.json(results);
-    });
+router.get('/', async (req, res) => {
+  const { role, teacher_id } = req.query;
+  let query = 'SELECT * FROM subjects';
+  let params = [];
+  if (role === 'teacher' && teacher_id) {
+    query += ' WHERE teacher_id = ?';
+    params.push(teacher_id);
   }
+  const [rows] = await db.query(query, params);
+  res.json(rows);
 });
 
 // Update an existing subject
@@ -92,6 +89,23 @@ router.get('/my-subjects', async (req, res) => {
   } catch (err) {
     console.error('Error fetching subjects:', err);
     res.status(500).send('Database error.');
+  }
+});
+
+// Add a new subject with teacher association
+router.post('/add', async (req, res) => {
+  const { subject_code, subject_description, teacher_id } = req.body;
+  if (!subject_code || !subject_description || !teacher_id) {
+    return res.json({ success: false, message: 'All fields are required.' });
+  }
+  try {
+    await db.query(
+      'INSERT INTO subjects (subject_code, subject_description, teacher_id) VALUES (?, ?, ?)',
+      [subject_code, subject_description, teacher_id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.json({ success: false, message: 'Server error.' });
   }
 });
 

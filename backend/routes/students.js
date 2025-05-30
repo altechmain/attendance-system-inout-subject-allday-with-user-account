@@ -99,11 +99,32 @@ router.delete('/delete/:id', (req, res) => {
 });
 
 // GET all students
-router.get('/', (req, res) => {
-  db.query('SELECT * FROM students', (err, results) => {
-    if (err) return res.status(500).json({ error: 'Database error.' });
-    res.json(results);
-  });
+router.get('/', async (req, res) => {
+  const { role, teacher_id } = req.query;
+  let query = 'SELECT * FROM students';
+  let params = [];
+  if (role === 'teacher' && teacher_id) {
+    query += ' WHERE teacher_id = ?';
+    params.push(teacher_id);
+  }
+  const [rows] = await db.query(query, params);
+  res.json(rows);
+});
+
+router.post('/add', async (req, res) => {
+  const { id_number, rfid_number, lastname, firstname, middle_initial, course, email, teacher_id } = req.body;
+  if (!id_number || !rfid_number || !lastname || !firstname || !teacher_id) {
+    return res.json({ success: false, message: 'Required fields missing.' });
+  }
+  try {
+    await db.query(
+      'INSERT INTO students (id_number, rfid_number, lastname, firstname, middle_initial, course, email, teacher_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [id_number, rfid_number, lastname, firstname, middle_initial, course, email, teacher_id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.json({ success: false, message: 'Server error.' });
+  }
 });
 
 module.exports = router;
