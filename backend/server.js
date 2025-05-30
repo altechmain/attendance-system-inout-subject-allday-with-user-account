@@ -31,7 +31,23 @@ app.use('/api/admin', adminLoginRouter);
 app.use('/api/admin', addAdminRouter);
 //added to serve without using go live in vscode
 // Serve static frontend files
-app.use(express.static(path.join(__dirname, '..', 'frontend')));
+//app.use(express.static(path.join(__dirname, '..', 'frontend')));
+
+// Serve frontend files (no directory listing)
+const frontendPath = path.join(__dirname, '../frontend');
+app.use(express.static(frontendPath, { index: false }));
+
+// Block /frontend and /frontend/
+app.get('/frontend', (req, res) => res.status(404).send('Not found'));
+app.get('/frontend/', (req, res) => res.status(404).send('Not found'));
+
+// Block any directory listing for any folder
+app.use((req, res, next) => {
+  if (req.path.match(/\/$/)) {
+    return res.status(404).send('Not found');
+  }
+  next();
+});
 //==========
 
 
