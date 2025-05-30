@@ -77,4 +77,22 @@ router.delete('/delete/:id', (req, res) => {
   });
 });
 
+// Get subjects for the logged-in user
+router.get('/my-subjects', async (req, res) => {
+  try {
+    if (req.user.role === 'teacher') {
+      // Only subjects created by this teacher
+      const [rows] = await db.query('SELECT * FROM subjects WHERE teacher_id = ?', [req.user.teacher_id]);
+      res.json(rows);
+    } else {
+      // Admin: all subjects
+      const [rows] = await db.query('SELECT * FROM subjects');
+      res.json(rows);
+    }
+  } catch (err) {
+    console.error('Error fetching subjects:', err);
+    res.status(500).send('Database error.');
+  }
+});
+
 module.exports = router;

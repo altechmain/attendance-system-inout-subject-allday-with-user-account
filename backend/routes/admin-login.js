@@ -14,38 +14,54 @@ const dbConfig = {
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
-  // 1. Allow hardcoded admin login
+  // 1. Hardcoded superadmin login
   if (username === 'superadmin' && password === 'superadmin') {
-    return res.json({ success: true, hardcoded: true });
+    return res.json({ success: true, role: 'admin' });
   }
 
-  // 2. Check in accounts and admins table
   try {
     const conn = await mysql.createConnection(dbConfig);
-    // Find account with role 'admin' and matching username, joined with admins table
-    const [rows] = await conn.execute(
-      `SELECT a.password_hash
-         FROM accounts a
-         JOIN admins ad ON ad.account_id = a.id
-        WHERE a.username = ? AND a.role = 'admin'
-        LIMIT 1`,
+
+    // Find account by username
+    const [accounts] = await conn.execute(
+      'SELECT * FROM accounts WHERE username = ? LIMIT 1',
       [username]
     );
+
+    if (accounts.length === 0) {
+      await conn.end();
+      return res.json({ success: false, message: 'Invalid username or password.' });
+    }
+
+    const account = accounts[0];
+    const match = await bcrypt.compare(password, account.password_hash);
+
+    if (!match) {
+      await conn.end();
+      return res.json({ success: false, message: 'Invalid username or password.' });
+    }
+
+    // If teacher, get teacher_id
+    if (account.role === 'teacher') {
+      const [teachers] = await conn.execute(
+        'SELECT id FROM teachers WHERE account_id = ? LIMIT 1',
+        [account.id]
+      );
+      await conn.end();
+      if (teachers.length === 0) {
+        return res.json({ success: false, message: 'Teacher profile not found.' });
+      }
+      return res.json({
+        success: true,
+        role: 'teacher',
+        teacher_id: teachers[0].id
+      });
+    }
+
+    // If admin
     await conn.end();
+    return res.json({ success: true, role: 'admin' });
 
-    if (rows.length === 0) {
-      return res.json({ success: false, message: 'Invalid credentials.' });
-    }
-
-    const admin = rows[0];
-    console.log('Comparing:', password, admin.password_hash);
-    const match = await bcrypt.compare(password, admin.password_hash);
-    console.log('Match result:', match);
-    if (match) {
-      return res.json({ success: true });
-    } else {
-      return res.json({ success: false, message: 'Invalid credentials.' });
-    }
   } catch (err) {
     console.error(err);
     return res.json({ success: false, message: 'Server error.' });

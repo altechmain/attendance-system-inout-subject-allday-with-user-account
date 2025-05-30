@@ -24,9 +24,10 @@
       <input type="password" id="password" class="form-control mb-3" required>
       <label for="destination" class="form-label">Open After Login</label>
       <select id="destination" class="form-control mb-3" required>
-        <option value="scan">Attendance</option>
-        <option value="management">Management</option>
         <option value="admin">Add Admin</option>
+        <option value="teacher">Add Teacher</option>
+        <option value="management">Management</option>
+        <option value="scan">Scan</option>
       </select>
       <button type="submit" class="btn btn-primary w-100">Login</button>
       <div class="error mt-3" id="errorMsg"></div>
@@ -47,14 +48,17 @@
         });
         const result = await response.json();
         if (result.success) {
-          // Save session info
           localStorage.setItem('admin_logged_in', 'true');
+          localStorage.setItem('role', result.role);
+          if (result.teacher_id) localStorage.setItem('teacher_id', result.teacher_id);
           if (destination === 'scan') {
             window.location.href = '/frontend/scan.html';
           } else if (destination === 'management') {
             window.location.href = '/frontend/management.html';
           } else if (destination === 'admin') {
             window.location.href = '/frontend/add-admin.html';
+          } else if (destination === 'teacher') {
+            window.location.href = '/frontend/add-teacher.html';
           }
         } else {
           document.getElementById('errorMsg').textContent = result.message || 'Invalid username or password.';
