@@ -372,7 +372,13 @@
     const studentRowsPerPage = 10;
 
     async function loadStudents() {
-      const res = await fetch('http://localhost:3000/api/students');
+      const role = localStorage.getItem('role');
+      const teacher_id = localStorage.getItem('teacher_id');
+      let url = 'http://localhost:3000/api/students';
+      if (role === 'teacher' && teacher_id) {
+        url += `?role=teacher&teacher_id=${teacher_id}`;
+      }
+      const res = await fetch(url);
       allStudents = await res.json();
       renderStudentTable(allStudents);
     }
@@ -475,14 +481,18 @@ window.showEditStudentModal = showEditStudentModal;
       e.preventDefault();
       const formData = new FormData(e.target);
       const data = Object.fromEntries(formData.entries());
-      const res = await fetch('http://localhost:3000/api/subjects/register', {
+      data.teacher_id = localStorage.getItem('teacher_id'); // Add this line
+
+      const res = await fetch('http://localhost:3000/api/subjects/add', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(data)
       });
-      document.getElementById('subjectMessage').textContent = await res.text();
+      document.getElementById('subjectMessage').textContent = (await res.json()).success
+        ? 'Subject registered successfully.'
+        : 'Failed to register subject.';
       e.target.reset();
-      await loadSubjects(); // <-- reload subjects after adding
+      await loadSubjects();
     });
 
     // Student registration
@@ -490,25 +500,29 @@ window.showEditStudentModal = showEditStudentModal;
       e.preventDefault();
       const formData = new FormData(e.target);
       const data = Object.fromEntries(formData.entries());
-      const res = await fetch('http://localhost:3000/api/students/register', {
+      data.teacher_id = localStorage.getItem('teacher_id'); // Add this line
+
+      const res = await fetch('http://localhost:3000/api/students/add', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(data)
       });
-      document.getElementById('studentMessage').textContent = await res.text();
+      document.getElementById('studentMessage').textContent = (await res.json()).success
+        ? 'Student registered successfully.'
+        : 'Failed to register student.';
       e.target.reset();
-      // Immediately reload the students table after registration
       await loadStudents();
     });
 
     // CSV upload
     document.getElementById('uploadForm').addEventListener('submit', async function(e) {
-      e.preventDefault(); // Prevents page reload
+      e.preventDefault();
       const fileInput = document.getElementById('csvFile');
       if (!fileInput.files.length) return false;
 
       const formData = new FormData();
       formData.append('csv', fileInput.files[0]);
+      formData.append('teacher_id', localStorage.getItem('teacher_id')); // <-- add this line
 
       const response = await fetch('http://localhost:3000/api/students/upload', {
         method: 'POST',
@@ -516,9 +530,10 @@ window.showEditStudentModal = showEditStudentModal;
       });
 
       const text = await response.text();
-      document.getElementById('uploadMessage').textContent = text;
+      document.getElementById('uploadMessage').textContent = text; // <-- show notification
       e.target.reset();
-      return false; // Extra safeguard
+      await loadStudents(); // <-- reload students for the teacher
+      return false;
     });
 
     // REPORT TAB LOGIC
@@ -746,7 +761,13 @@ window.showEditStudentModal = showEditStudentModal;
     const subjectRowsPerPage = 10;
 
     async function loadSubjects() {
-      const res = await fetch('http://localhost:3000/api/subjects');
+      const role = localStorage.getItem('role');
+      const teacher_id = localStorage.getItem('teacher_id');
+      let url = 'http://localhost:3000/api/subjects';
+      if (role === 'teacher' && teacher_id) {
+        url += `?role=teacher&teacher_id=${teacher_id}`;
+      }
+      const res = await fetch(url);
       allSubjects = await res.json();
       renderSubjectTable(allSubjects);
     }
@@ -894,12 +915,11 @@ window.showEditStudentModal = showEditStudentModal;
     // In management.html or your JS file
 const role = localStorage.getItem('role');
 const teacher_id = localStorage.getItem('teacher_id');
-
-fetch(`/api/subjects?role=${role}&teacher_id=${teacher_id}`)
-  .then(res => res.json())
-  .then(subjects => {
-    // Render only the teacher's subjects
-  });
+let url = 'http://localhost:3000/api/students';
+if (role === 'teacher' && teacher_id) {
+  url += `?role=teacher&teacher_id=${teacher_id}`;
+}
+const res = await fetch(url);
   </script>
 
 </body>

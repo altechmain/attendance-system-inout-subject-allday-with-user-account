@@ -1,2 +1,1 @@
-fix no association in the subject and students for teacher_id in the table students and subjects, 
-the value is null
+add profile and change password of the teacher_id

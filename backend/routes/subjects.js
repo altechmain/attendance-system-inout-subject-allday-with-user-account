@@ -95,18 +95,11 @@ router.get('/my-subjects', async (req, res) => {
 // Add a new subject with teacher association
 router.post('/add', async (req, res) => {
   const { subject_code, subject_description, teacher_id } = req.body;
-  if (!subject_code || !subject_description || !teacher_id) {
-    return res.json({ success: false, message: 'All fields are required.' });
-  }
-  try {
-    await db.query(
-      'INSERT INTO subjects (subject_code, subject_description, teacher_id) VALUES (?, ?, ?)',
-      [subject_code, subject_description, teacher_id]
-    );
-    res.json({ success: true });
-  } catch (err) {
-    res.json({ success: false, message: 'Server error.' });
-  }
+  await db.query(
+    'INSERT INTO subjects (subject_code, subject_description, teacher_id) VALUES (?, ?, ?)',
+    [subject_code, subject_description, teacher_id]
+  );
+  res.json({ success: true });
 });
 
 module.exports = router;

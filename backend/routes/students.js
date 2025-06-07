@@ -9,6 +9,12 @@ const upload = multer({ dest: 'uploads/' });
 router.post('/upload', upload.single('csv'), (req, res) => {
   if (!req.file) return res.status(400).send('No file uploaded.');
 
+  const teacher_id = req.body.teacher_id; // <-- get teacher_id from form
+  if (!teacher_id) {
+    fs.unlinkSync(req.file.path);
+    return res.status(400).send('Teacher ID is required.');
+  }
+
   const results = [];
   fs.createReadStream(req.file.path)
     .pipe(csv(['id_number', 'rfid_number', 'lastname', 'firstname', 'middle_initial', 'course', 'email']))
@@ -21,10 +27,11 @@ router.post('/upload', upload.single('csv'), (req, res) => {
         row.firstname,
         row.middle_initial,
         row.course,
-        row.email
+        row.email,
+        teacher_id // <-- add teacher_id to each row
       ]);
       db.query(
-        'INSERT IGNORE INTO students (id_number, rfid_number, lastname, firstname, middle_initial, course, email) VALUES ?',
+        'INSERT IGNORE INTO students (id_number, rfid_number, lastname, firstname, middle_initial, course, email, teacher_id) VALUES ?',
         [values],
         (err, result) => {
           fs.unlinkSync(req.file.path); // Clean up
@@ -113,18 +120,11 @@ router.get('/', async (req, res) => {
 
 router.post('/add', async (req, res) => {
   const { id_number, rfid_number, lastname, firstname, middle_initial, course, email, teacher_id } = req.body;
-  if (!id_number || !rfid_number || !lastname || !firstname || !teacher_id) {
-    return res.json({ success: false, message: 'Required fields missing.' });
-  }
-  try {
-    await db.query(
-      'INSERT INTO students (id_number, rfid_number, lastname, firstname, middle_initial, course, email, teacher_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [id_number, rfid_number, lastname, firstname, middle_initial, course, email, teacher_id]
-    );
-    res.json({ success: true });
-  } catch (err) {
-    res.json({ success: false, message: 'Server error.' });
-  }
+  await db.query(
+    'INSERT INTO students (id_number, rfid_number, lastname, firstname, middle_initial, course, email, teacher_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    [id_number, rfid_number, lastname, firstname, middle_initial, course, email, teacher_id]
+  );
+  res.json({ success: true });
 });
 
 module.exports = router;
