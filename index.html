@@ -12,6 +12,17 @@
     }
     .form-label { font-weight: 500; }
     .error { color: red; text-align: center; }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.3);
+      align-items: center;
+      justify-content: center;
+    }
   </style>
 </head>
 <body>
@@ -30,7 +41,27 @@
       <button type="submit" class="btn btn-primary w-100">Login</button>
       <div class="error mt-3" id="errorMsg"></div>
     </form>
+    <div class="text-center mt-2">
+      <a href="#" id="forgotPasswordLink">Forgot Password?</a>
+    </div>
   </div>
+
+  <!-- Modal for forgot password -->
+  <div class="modal" tabindex="-1" id="forgotPasswordModal">
+    <div style="background:#fff; padding:2em; border-radius:8px; max-width:350px; margin:auto;">
+      <h5>Reset Password</h5>
+      <form id="forgotPasswordForm">
+        <div class="mb-3">
+          <label for="forgotEmail" class="form-label">Enter your email</label>
+          <input type="email" id="forgotEmail" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Send Reset Link</button>
+        <div id="forgotMsg" class="mt-2"></div>
+      </form>
+      <button class="btn btn-link mt-2" id="closeForgotModal">Close</button>
+    </div>
+  </div>
+
   <script>
     document.getElementById('loginForm').addEventListener('submit', async function(e) {
       e.preventDefault();
@@ -63,6 +94,31 @@
         document.getElementById('errorMsg').textContent = 'Server error.';
       }
     });
+
+    // Show modal
+    document.getElementById('forgotPasswordLink').onclick = function() {
+      document.getElementById('forgotPasswordModal').style.display = 'flex';
+    };
+    // Hide modal
+    document.getElementById('closeForgotModal').onclick = function() {
+      document.getElementById('forgotPasswordModal').style.display = 'none';
+    };
+    // Handle forgot password form
+    document.getElementById('forgotPasswordForm').onsubmit = async function(e) {
+      e.preventDefault();
+      const email = document.getElementById('forgotEmail').value.trim();
+      const msgDiv = document.getElementById('forgotMsg');
+      msgDiv.textContent = 'Processing...';
+      const res = await fetch('http://localhost:3000/api/teachers/forgot-password', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ email })
+      });
+      const result = await res.json();
+      msgDiv.textContent = result.success
+        ? 'If your email exists, a reset link has been sent.'
+        : (result.message || 'Failed to send reset link.');
+    };
   </script>
 </body>
 </html>

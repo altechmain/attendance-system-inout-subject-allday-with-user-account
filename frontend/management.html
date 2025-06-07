@@ -160,6 +160,7 @@
       <button class="tab" id="tab-student">Student Management</button>
       <button class="tab" id="tab-upload">Upload CSV</button>
       <button class="tab" id="tab-report">Report</button>
+      <!-- Add this after your Report tab button -->
       <!-- Stand-out Logout tab -->
       <button
         class="tab"
@@ -356,6 +357,18 @@
         </div>
       </div>
     </div>
+
+    <!-- Profile Tab Content - New -->
+    <div class="tab-content" id="content-profile" style="display:none;">
+      <h2>Admin Profile</h2>
+      <form id="profileForm" autocomplete="off">
+        <input type="text" name="username" placeholder="Username" required />
+        <input type="email" name="email" placeholder="Email" required />
+        <input type="password" name="password" placeholder="Password" required />
+        <button type="submit">Update Profile</button>
+        <div class="message" id="profileMessage"></div>
+      </form>
+    </div>
  
   </div>
 
@@ -461,7 +474,8 @@ window.showEditStudentModal = showEditStudentModal;
       'tab-subject': document.getElementById('content-subject'),
       'tab-student': document.getElementById('content-student'),
       'tab-upload': document.getElementById('content-upload'),
-      'tab-report': document.getElementById('content-report') // NEW
+      'tab-report': document.getElementById('content-report'), // NEW
+      'tab-profile': document.getElementById('content-profile')  // NEW
     };
     tabs.forEach(tab => {
       tab.addEventListener('click', () => {

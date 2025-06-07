@@ -20,6 +20,7 @@ const subjectsRouter = require('./routes/subjects');
 const adminLoginRouter = require('./routes/admin-login');
 const addAdminRouter = require('./routes/add-admin');
 const addTeacherRouter = require('./routes/add-teacher');
+const teachersRouter = require('./routes/teachers');
 
 require('./emailCron');
 
@@ -31,6 +32,7 @@ app.use('/api/subjects', subjectsRouter);
 app.use('/api/admin', adminLoginRouter);
 app.use('/api/admin', addAdminRouter);
 app.use('/api/admin', addTeacherRouter);
+app.use('/api/teachers', teachersRouter);
 //added to serve without using go live in vscode
 // Serve static frontend files
 //app.use(express.static(path.join(__dirname, '..', 'frontend')));
