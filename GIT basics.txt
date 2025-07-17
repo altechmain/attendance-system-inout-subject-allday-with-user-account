@@ -1,0 +1,14 @@
+git init                  
+git add . 
+git commit -m "Initial commit"
+git branch -M main
+git remote add origin <your-repo-url>
+git push -u origin main
+git add . && git commit -m "first commit" && git push
+
+===to restore to its current not yet committed files===
+git reset --hard
+======
+
+===after setting it all===
+git add . && git commit -m "first commit" && git push

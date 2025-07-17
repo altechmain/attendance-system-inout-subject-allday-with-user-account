@@ -26,3 +26,37 @@ python -m http.server 5500
 Then open:
 http://localhost:5500
 
+
+=================================================
+
+to run locally
+
+===running the server===
+open command prompt terminal in vscode
+cs backend
+npm start
+
+===running the localhost===
+cd frontend
+python -m http.server 5500
+
+Then open:
+http://localhost:5500
+
+OR
+
+===running the localhost===
+go live in the status bar
+
+===links===
+
+for teachers
+http://127.0.0.1:5500/index.html
+
+for admin
+http://127.0.0.1:5500/admin.html
+
+default username: superadmin
+default password: superadmin
+
+

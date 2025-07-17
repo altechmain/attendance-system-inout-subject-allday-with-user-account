@@ -1,1 +1,19 @@
-add profile and change password of the teacher_id
+test all if working correcly
+upload to VPS and hosting
+
+To use PM2 instead of node for running your backend, follow these steps:
+1. Install PM2 globally (if not yet installed)
+npm install -g pm2
+2. Start your app with PM2
+From your backend folder (where server.js is located):
+pm2 start server.js
+3. Check status
+pm2 status
+4. View logs
+pm2 logs
+5. Restart/stop your app
+pm2 restart server.js
+pm2 stop server.js
+6. Auto-start on server reboot
+pm2 save
+pm2 startup
