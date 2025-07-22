@@ -106,7 +106,7 @@ router.delete('/delete/:id', (req, res) => {
 });
 
 // GET all students
-router.get('/', async (req, res) => {
+router.get('/', (req, res) => {
   const { role, teacher_id } = req.query;
   let query = 'SELECT * FROM students';
   let params = [];
@@ -114,8 +114,10 @@ router.get('/', async (req, res) => {
     query += ' WHERE teacher_id = ?';
     params.push(teacher_id);
   }
-  const [rows] = await db.query(query, params);
-  res.json(rows);
+  db.query(query, params, (err, rows) => {
+    if (err) return res.status(500).send('Database error.');
+    res.json(rows);
+  });
 });
 
 router.post('/add', async (req, res) => {

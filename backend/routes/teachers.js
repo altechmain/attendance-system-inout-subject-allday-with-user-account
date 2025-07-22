@@ -9,18 +9,17 @@ const router = express.Router();
 const resetTokens = {};
 
 // Get teacher profile by teacher_id
-router.get('/profile/:teacher_id', async (req, res) => {
+router.get('/profile/:teacher_id', (req, res) => {
   const { teacher_id } = req.params;
-  try {
-    const [rows] = await db.query(
-      'SELECT firstname, lastname, email, account_id FROM teachers WHERE id = ?',
-      [teacher_id]
-    );
-    if (rows.length === 0) return res.status(404).json({ error: 'Teacher not found' });
-    res.json(rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: 'Server error' });
-  }
+  db.query(
+    'SELECT firstname, lastname, email, account_id FROM teachers WHERE id = ?',
+    [teacher_id],
+    (err, rows) => {
+      if (err) return res.status(500).json({ error: 'Server error' });
+      if (rows.length === 0) return res.status(404).json({ error: 'Teacher not found' });
+      res.json(rows[0]);
+    }
+  );
 });
 
 // Update teacher profile

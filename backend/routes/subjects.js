@@ -25,7 +25,7 @@ router.post('/register', (req, res) => {
 });
 
 // Get all subjects
-router.get('/', async (req, res) => {
+router.get('/', (req, res) => {
   const { role, teacher_id } = req.query;
   let query = 'SELECT * FROM subjects';
   let params = [];
@@ -33,8 +33,10 @@ router.get('/', async (req, res) => {
     query += ' WHERE teacher_id = ?';
     params.push(teacher_id);
   }
-  const [rows] = await db.query(query, params);
-  res.json(rows);
+  db.query(query, params, (err, rows) => {
+    if (err) return res.status(500).send('Database error.');
+    res.json(rows);
+  });
 });
 
 // Update an existing subject
@@ -74,32 +76,22 @@ router.delete('/delete/:id', (req, res) => {
   });
 });
 
-// Get subjects for the logged-in user
-router.get('/my-subjects', async (req, res) => {
-  try {
-    if (req.user.role === 'teacher') {
-      // Only subjects created by this teacher
-      const [rows] = await db.query('SELECT * FROM subjects WHERE teacher_id = ?', [req.user.teacher_id]);
-      res.json(rows);
-    } else {
-      // Admin: all subjects
-      const [rows] = await db.query('SELECT * FROM subjects');
-      res.json(rows);
-    }
-  } catch (err) {
-    console.error('Error fetching subjects:', err);
-    res.status(500).send('Database error.');
-  }
-});
-
 // Add a new subject with teacher association
-router.post('/add', async (req, res) => {
+router.post('/add', (req, res) => {
   const { subject_code, subject_description, teacher_id } = req.body;
-  await db.query(
+  db.query(
     'INSERT INTO subjects (subject_code, subject_description, teacher_id) VALUES (?, ?, ?)',
-    [subject_code, subject_description, teacher_id]
+    [subject_code, subject_description, teacher_id],
+    (err, result) => {
+      if (err) {
+        if (err.code === 'ER_DUP_ENTRY') {
+          return res.status(409).send('Subject already exists.');
+        }
+        return res.status(500).send('Database error.');
+      }
+      res.json({ success: true });
+    }
   );
-  res.json({ success: true });
 });
 
 module.exports = router;
