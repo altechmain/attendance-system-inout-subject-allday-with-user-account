@@ -45,7 +45,7 @@ router.post('/upload', upload.single('csv'), (req, res) => {
 router.post('/register', (req, res) => {
   const { id_number, rfid_number, lastname, firstname, middle_initial, course, email } = req.body;
   if (!id_number || !lastname || !firstname || !middle_initial || !course || !email) {
-    return res.status(400).send('All fields except RFID number are required.');
+    return res.status(400).json({ error: 'missing_fields', message: 'All fields except RFID number are required.' });
   }
   const sql = `INSERT INTO students (id_number, rfid_number, lastname, firstname, middle_initial, course, email)
                VALUES (?, ?, ?, ?, ?, ?, ?)`;
@@ -53,11 +53,17 @@ router.post('/register', (req, res) => {
   db.query(sql, values, (err, result) => {
     if (err) {
       if (err.code === 'ER_DUP_ENTRY') {
-        return res.status(409).send('Student already exists.');
+        if (err.sqlMessage && err.sqlMessage.includes('rfid_number')) {
+          return res.status(409).json({ error: 'rfid_exists', message: 'RFID number already exists.' });
+        }
+        if (err.sqlMessage && err.sqlMessage.includes('id_number')) {
+          return res.status(409).json({ error: 'id_exists', message: 'Student ID number already exists.' });
+        }
+        return res.status(409).json({ error: 'duplicate_entry', message: 'Duplicate entry.' });
       }
-      return res.status(500).send('Database error.');
+      return res.status(500).json({ error: 'db_error', message: 'Database error.' });
     }
-    res.send('Student registered successfully.');
+    res.json({ success: true, message: 'Student registered successfully.' });
   });
 });
 
@@ -120,13 +126,27 @@ router.get('/', (req, res) => {
   });
 });
 
-router.post('/add', async (req, res) => {
+router.post('/add', (req, res) => {
   const { id_number, rfid_number, lastname, firstname, middle_initial, course, email, teacher_id } = req.body;
-  await db.query(
+  db.query(
     'INSERT INTO students (id_number, rfid_number, lastname, firstname, middle_initial, course, email, teacher_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-    [id_number, rfid_number, lastname, firstname, middle_initial, course, email, teacher_id]
+    [id_number, rfid_number, lastname, firstname, middle_initial, course, email, teacher_id],
+    (err, result) => {
+      if (err) {
+        if (err.code === 'ER_DUP_ENTRY') {
+          if (err.sqlMessage && err.sqlMessage.includes('rfid_number')) {
+            return res.status(409).send('RFID number already exists.');
+          }
+          if (err.sqlMessage && err.sqlMessage.includes('id_number')) {
+            return res.status(409).send('Student ID number already exists.');
+          }
+          return res.status(409).send('Duplicate entry.');
+        }
+        return res.status(500).send('Database error.');
+      }
+      res.json({ success: true });
+    }
   );
-  res.json({ success: true });
 });
 
 module.exports = router;
